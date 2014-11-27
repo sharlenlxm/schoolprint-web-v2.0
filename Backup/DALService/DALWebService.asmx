@@ -1,1 +1,0 @@
-﻿<%@ WebService Language="C#" CodeBehind="DALWebService.asmx.cs" Class="DALService.DALWebService" %>
