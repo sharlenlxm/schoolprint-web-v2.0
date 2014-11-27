@@ -1,0 +1,15 @@
+E:\项目\SchoolPrint\DALService\bin\DALService.dll
+E:\项目\SchoolPrint\DALService\bin\DALService.pdb
+E:\项目\SchoolPrint\DALService\obj\Debug\ResolveAssemblyReference.cache
+E:\项目\SchoolPrint\DALService\obj\Debug\DALService.dll
+E:\项目\SchoolPrint\DALService\obj\Debug\DALService.pdb
+G:\schoolprint\DALService\bin\DALService.dll
+G:\schoolprint\DALService\bin\DALService.pdb
+G:\schoolprint\DALService\obj\Debug\ResolveAssemblyReference.cache
+G:\schoolprint\DALService\obj\Debug\DALService.dll
+G:\schoolprint\DALService\obj\Debug\DALService.pdb
+C:\Users\acer\Desktop\schoolprint\DALService\bin\DALService.dll
+C:\Users\acer\Desktop\schoolprint\DALService\bin\DALService.pdb
+C:\Users\acer\Desktop\schoolprint\DALService\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\acer\Desktop\schoolprint\DALService\obj\Debug\DALService.dll
+C:\Users\acer\Desktop\schoolprint\DALService\obj\Debug\DALService.pdb
