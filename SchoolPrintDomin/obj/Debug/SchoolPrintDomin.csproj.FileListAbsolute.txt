@@ -1,0 +1,15 @@
+E:\项目\SchoolPrint\SchoolPrintDomin\bin\Debug\SchoolPrintDomin.dll
+E:\项目\SchoolPrint\SchoolPrintDomin\bin\Debug\SchoolPrintDomin.pdb
+E:\项目\SchoolPrint\SchoolPrintDomin\obj\Debug\ResolveAssemblyReference.cache
+E:\项目\SchoolPrint\SchoolPrintDomin\obj\Debug\SchoolPrintDomin.dll
+E:\项目\SchoolPrint\SchoolPrintDomin\obj\Debug\SchoolPrintDomin.pdb
+G:\schoolprint\SchoolPrintDomin\bin\Debug\SchoolPrintDomin.dll
+G:\schoolprint\SchoolPrintDomin\bin\Debug\SchoolPrintDomin.pdb
+G:\schoolprint\SchoolPrintDomin\obj\Debug\ResolveAssemblyReference.cache
+G:\schoolprint\SchoolPrintDomin\obj\Debug\SchoolPrintDomin.dll
+G:\schoolprint\SchoolPrintDomin\obj\Debug\SchoolPrintDomin.pdb
+C:\Users\acer\Desktop\schoolprint\SchoolPrintDomin\bin\Debug\SchoolPrintDomin.dll
+C:\Users\acer\Desktop\schoolprint\SchoolPrintDomin\bin\Debug\SchoolPrintDomin.pdb
+C:\Users\acer\Desktop\schoolprint\SchoolPrintDomin\obj\Debug\ResolveAssemblyReference.cache
+C:\Users\acer\Desktop\schoolprint\SchoolPrintDomin\obj\Debug\SchoolPrintDomin.dll
+C:\Users\acer\Desktop\schoolprint\SchoolPrintDomin\obj\Debug\SchoolPrintDomin.pdb

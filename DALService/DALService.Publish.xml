@@ -1,0 +1,8 @@
+<publishData>
+  <publishTarget publishUrl="G:\testweb\">
+    <file relUrl="DALWebService.asmx" publishTime="10/22/2013 21:21:37" />
+    <file relUrl="Web.config" publishTime="10/25/2013 18:24:23" />
+    <file relUrl="bin/DALService.pdb" publishTime="11/03/2013 19:30:00" />
+    <file relUrl="bin/DALService.dll" publishTime="11/03/2013 19:30:00" />
+  </publishTarget>
+</publishData>
