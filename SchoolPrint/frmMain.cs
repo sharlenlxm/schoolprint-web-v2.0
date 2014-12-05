@@ -1322,10 +1322,317 @@ namespace SchoolPrint
             //GC.Collect();
 
             #endregion
-            int nomal = refreshNormal();
-            int VIP = refreshVIP();
+            //int nomal = refreshNormal();
+            //int VIP = refreshVIP();
+            int nomal = refreshNormalWithDatabase();
+            int VIP = refreshVIPWithDatabase();
+            //int nomal = 0;
             //int VIP = 0;
             MessageBox.Show("一共有" + (nomal + VIP) + "订单任务，其中VIP有" + VIP + "个");
+        }
+
+        private int refreshNormalWithDatabase()
+        {
+            int number = 0;
+            SQLiteCommand command;
+            SQLiteConnection connectionToDatabase;
+
+            if (File.Exists(Application.StartupPath + "\\tempPrint.db3"))
+                File.Delete(Application.StartupPath + "\\tempPrint.db3");
+            SQLiteConnection.CreateFile(Application.StartupPath + "\\tempPrint.db3");
+            connectionToDatabase = new SQLiteConnection("Data Source=" + Application.StartupPath + "\\tempPrint.db3");
+            connectionToDatabase.Open();
+            command = new SQLiteCommand();
+            command.CommandText = "create table tempPrintFile(ID char(15), paperType char(50), address char(30), remark char(200), names char(50), uploadTime date, sendTime date, timeQuantum char(20), files vchar(2000))";
+            command.Connection = connectionToDatabase;
+            command.ExecuteNonQuery();
+            connectionToDatabase.Close();
+
+            string jsonText = PostDataToUrl("", "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/printing/normal/list");
+            //StreamReader r = new StreamReader(@"F:\点维工作室\schoolprint-web-version2\schoolprint-web-v2.0\服务器数据.txt", Encoding.Default);
+            //string jsonText = r.ReadToEnd();
+            //r.Close();
+            if (jsonText.IndexOf("true") != -1)
+            {
+                JObject jo = (JObject)JsonConvert.DeserializeObject(jsonText);
+                JArray jInfo = (JArray)jo["message"];
+                int count = jInfo.Count;
+                item = new ListboxItem[count + 2];
+                connectionToDatabase = new SQLiteConnection("Data Source=" + Application.StartupPath + "\\tempPrint.db3");
+                connectionToDatabase.Open();
+                foreach (JToken jt in jInfo)
+                {
+
+                    int place = jt["delivery_time"].ToString().IndexOf(", ");
+                    string uploadDate = jt["delivery_time"].ToString().Substring(0, place);
+                    string uploadTimeQuantum = jt["delivery_time"].ToString().Substring(place + 2);
+                    command = new SQLiteCommand();
+                    command.CommandText = "insert into tempPrintFile values('" + jt["order_tid"].ToString() + "','" + jt["printing"].ToString() + "','" + jt["user_address"].ToString() + "','" + jt["message"].ToString() + "','" + jt["user_information"].ToString() + "','" + jt["uploaded_time"].ToString() + "','" + uploadDate + "','" + uploadTimeQuantum + "','" + jt["files"].ToString() + "')";
+                    command.Connection = connectionToDatabase;
+                    command.ExecuteNonQuery();
+                }
+                connectionToDatabase.Close();
+
+                connectionToDatabase = new SQLiteConnection("Data Source=" + Application.StartupPath + "\\tempPrint.db3");
+                connectionToDatabase.Open();
+                command.CommandText = "select distinct sendTime,timeQuantum from tempPrintFile group by sendTime,timeQuantum";
+                command.Connection = connectionToDatabase;
+                SQLiteDataAdapter adapter = new SQLiteDataAdapter(command);
+                DataTable userTable = new DataTable();
+                adapter.Fill(userTable);
+                connectionToDatabase.Close();
+                for (int k = userTable.Rows.Count - 1; k >= 0; k--)
+                {
+                    connectionToDatabase = new SQLiteConnection("Data Source=" + Application.StartupPath + "\\tempPrint.db3");
+                    connectionToDatabase.Open();
+                    command.CommandText = "select ID,paperType,address,remark,names,files from tempPrintFile where sendTime = '" + Convert.ToDateTime(userTable.Rows[k]["sendTime"]).ToString("yyyy-MM-dd") + "' and timeQuantum = '" + userTable.Rows[k]["timeQuantum"] + "' group by names,address,ID";
+                    command.Connection = connectionToDatabase;
+                    SQLiteDataAdapter adapters = new SQLiteDataAdapter(command);
+                    DataTable userTables = new DataTable();
+                    adapters.Fill(userTables);
+                    connectionToDatabase.Close();
+
+                    number += userTables.Rows.Count;
+
+                    string past = "";
+                    int order_count = 1;
+                    int color_change = 0;
+                    for (int i = 0; i < userTables.Rows.Count; i++)
+                    {
+                        if (userTables.Rows[i]["address"].ToString() + userTables.Rows[i]["names"].ToString() != past)
+                        {
+                            if (past != "")
+                                SetOrderNumber(order_count - 1, "7000", past);
+                            color_change = (color_change + 1) % 2;
+                            past = userTables.Rows[i]["address"].ToString() + userTables.Rows[i]["names"].ToString();
+                            print_message temp = new print_message(userTables.Rows[i]["address"].ToString(), userTables.Rows[i]["names"].ToString(), this, "7000");
+                            temp.Dock = System.Windows.Forms.DockStyle.Top;
+                            temp.Name = userTables.Rows[i]["address"].ToString() + userTables.Rows[i]["names"].ToString();
+                            isolation temp_isolation = new isolation();
+                            temp_isolation.Dock = System.Windows.Forms.DockStyle.Top;
+                            this.panel1.Controls.Add(temp_isolation);
+                            this.panel1.Controls.Add(temp);
+                            if (color_change == 1)
+                                temp.color_set(Color.LightYellow);
+                            else
+                                temp.color_set(Color.LightBlue);
+                            order_count = 1;
+                        }
+
+                        if (color_change == 1)
+                        {
+                            userTables.Rows[i]["files"] = "{'files': " + userTables.Rows[i]["files"].ToString() + "}";
+                            JObject JOtemp = (JObject)JsonConvert.DeserializeObject(userTables.Rows[i]["files"].ToString());
+                            JArray JAtemp = (JArray)JOtemp["files"];
+                            foreach (JToken temp_token in JAtemp)
+                            {
+                                item[i] = new ListboxItem(temp_token["fileurl"].ToString(), temp_token["filename"].ToString(), userTables.Rows[i]["address"].ToString(), this, userTables.Rows[i]["paperType"].ToString(), "", "", userTables.Rows[i]["remark"].ToString(), userTables.Rows[i]["ID"].ToString(), userTables.Rows[i]["names"].ToString(), "", "", "", Color.LightYellow, "", "7000");
+                                //item[i].Name = i.ToString();
+                                item[i].Name = userTables.Rows[i]["ID"].ToString() + userTables.Rows[i]["address"].ToString() + userTables.Rows[i]["names"].ToString();
+                                item[i].Dock = System.Windows.Forms.DockStyle.Top;
+                                item[i].Location = new System.Drawing.Point(0, 80 * i);
+                                //item[i].Name = "item" + i;
+                                //item[i].Name = address[i] + Names[i];
+                                item[i].Size = new System.Drawing.Size(System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width, 80);
+                                item[i].MinimumSize = new Size(450, 80);
+                                item[i].TabIndex = i;
+                                this.panel1.Controls.Add(item[i]);
+                                //is_any_print = 1;
+                                //print_num++;
+                            }
+                            Order temp_order = new Order(this, Color.LightYellow, userTables.Rows[i]["ID"].ToString(), order_count++, userTables.Rows[i]["paperType"].ToString(), userTables.Rows[i]["remark"].ToString(), userTables.Rows[i]["address"].ToString(), userTables.Rows[i]["names"].ToString(), userTables.Rows[i]["files"].ToString(), "7000");
+                            temp_order.Name = userTables.Rows[i]["ID"].ToString();
+                            temp_order.Dock = System.Windows.Forms.DockStyle.Top;
+                            this.panel1.Controls.Add(temp_order);
+                        }
+                        else
+                        {
+                            userTables.Rows[i]["files"] = "{'files': " + userTables.Rows[i]["files"].ToString() + "}";
+                            JObject JOtemp = (JObject)JsonConvert.DeserializeObject(userTables.Rows[i]["files"].ToString());
+                            JArray JAtemp = (JArray)JOtemp["files"];
+                            foreach (JToken temp_token in JAtemp)
+                            {
+                                item[i] = new ListboxItem(temp_token["fileurl"].ToString(), temp_token["filename"].ToString(), userTables.Rows[i]["address"].ToString(), this, userTables.Rows[i]["paperType"].ToString(), "", "", userTables.Rows[i]["remark"].ToString(), userTables.Rows[i]["ID"].ToString(), userTables.Rows[i]["names"].ToString(), "", "", "", Color.LightBlue, "", "7000");
+                                //item[i].Name = i.ToString();
+                                item[i].Name = userTables.Rows[i]["ID"].ToString() + userTables.Rows[i]["address"].ToString() + userTables.Rows[i]["names"].ToString();
+                                item[i].Dock = System.Windows.Forms.DockStyle.Top;
+                                item[i].Location = new System.Drawing.Point(0, 80 * i);
+                                //item[i].Name = "item" + i;
+                                //item[i].Name = address[i] + Names[i];
+                                item[i].Size = new System.Drawing.Size(System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width, 80);
+                                item[i].MinimumSize = new Size(450, 80);
+                                item[i].TabIndex = i;
+                                this.panel1.Controls.Add(item[i]);
+                                //is_any_print = 1;
+                                //print_num++;
+                            }
+                            Order temp_order = new Order(this, Color.LightBlue, userTables.Rows[i]["ID"].ToString(), order_count++, userTables.Rows[i]["paperType"].ToString(), userTables.Rows[i]["remark"].ToString(), userTables.Rows[i]["address"].ToString(), userTables.Rows[i]["names"].ToString(), userTables.Rows[i]["files"].ToString(), "7000");
+                            temp_order.Name = userTables.Rows[i]["ID"].ToString();
+                            temp_order.Dock = System.Windows.Forms.DockStyle.Top;
+                            this.panel1.Controls.Add(temp_order);
+                        }
+                    }
+                    if (past != "")
+                        SetOrderNumber(order_count - 1, "7000", past);
+                    string time_str = "以下是" + userTable.Rows[k]["sendTime"].ToString().Substring(0, userTable.Rows[k]["sendTime"].ToString().IndexOf(' ')) + " " + userTable.Rows[k]["timeQuantum"].ToString() + "送货";
+                    time_form times = new time_form(time_str);
+                    times.Dock = System.Windows.Forms.DockStyle.Top;
+                    this.panel1.Controls.Add(times);
+                }
+            }
+            return number;
+        }
+
+        private int refreshVIPWithDatabase()
+        {
+            int number = 0;
+            SQLiteCommand command;
+            SQLiteConnection connectionToDatabase;
+
+            if (File.Exists(Application.StartupPath + "\\tempPrint.db3"))
+                File.Delete(Application.StartupPath + "\\tempPrint.db3");
+            SQLiteConnection.CreateFile(Application.StartupPath + "\\tempPrint.db3");
+            connectionToDatabase = new SQLiteConnection("Data Source=" + Application.StartupPath + "\\tempPrint.db3");
+            connectionToDatabase.Open();
+            command = new SQLiteCommand();
+            command.CommandText = "create table tempPrintFile(ID char(15), paperType char(50), address char(30), remark char(200), names char(50), uploadTime date, sendTime date, timeQuantum char(20), files vchar(2000))";
+            command.Connection = connectionToDatabase;
+            command.ExecuteNonQuery();
+            connectionToDatabase.Close();
+
+            string jsonText = PostDataToUrl("", "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/printing/vip/list");
+            //StreamReader r = new StreamReader(@"F:\点维工作室\schoolprint-web-version2\schoolprint-web-v2.0\服务器数据.txt", Encoding.Default);
+            //string jsonText = r.ReadToEnd();
+            //r.Close();
+            if (jsonText.IndexOf("true") != -1)
+            {
+                JObject jo = (JObject)JsonConvert.DeserializeObject(jsonText);
+                JArray jInfo = (JArray)jo["message"];
+                int count = jInfo.Count;
+                item = new ListboxItem[count + 2];
+                connectionToDatabase = new SQLiteConnection("Data Source=" + Application.StartupPath + "\\tempPrint.db3");
+                connectionToDatabase.Open();
+                foreach (JToken jt in jInfo)
+                {
+
+                    int place = jt["delivery_time"].ToString().IndexOf(", ");
+                    string uploadDate = jt["delivery_time"].ToString().Substring(0, place);
+                    string uploadTimeQuantum = jt["delivery_time"].ToString().Substring(place + 2);
+                    command = new SQLiteCommand();
+                    command.CommandText = "insert into tempPrintFile values('" + jt["order_tid"].ToString() + "','" + jt["printing"].ToString() + "','" + jt["user_address"].ToString() + "','" + jt["message"].ToString() + "','" + jt["user_information"].ToString() + "','" + jt["uploaded_time"].ToString() + "','" + uploadDate + "','" + uploadTimeQuantum + "','" + jt["files"].ToString() + "')";
+                    command.Connection = connectionToDatabase;
+                    command.ExecuteNonQuery();
+                }
+                connectionToDatabase.Close();
+
+                connectionToDatabase = new SQLiteConnection("Data Source=" + Application.StartupPath + "\\tempPrint.db3");
+                connectionToDatabase.Open();
+                command.CommandText = "select distinct sendTime,timeQuantum from tempPrintFile group by sendTime,timeQuantum";
+                command.Connection = connectionToDatabase;
+                SQLiteDataAdapter adapter = new SQLiteDataAdapter(command);
+                DataTable userTable = new DataTable();
+                adapter.Fill(userTable);
+                connectionToDatabase.Close();
+                for (int k = userTable.Rows.Count - 1; k >= 0; k--)
+                {
+                    connectionToDatabase = new SQLiteConnection("Data Source=" + Application.StartupPath + "\\tempPrint.db3");
+                    connectionToDatabase.Open();
+                    command.CommandText = "select ID,paperType,address,remark,names,files from tempPrintFile where sendTime = '" + Convert.ToDateTime(userTable.Rows[k]["sendTime"]).ToString("yyyy-MM-dd") + "' and timeQuantum = '" + userTable.Rows[k]["timeQuantum"] + "' group by names,address,ID";
+                    command.Connection = connectionToDatabase;
+                    SQLiteDataAdapter adapters = new SQLiteDataAdapter(command);
+                    DataTable userTables = new DataTable();
+                    adapters.Fill(userTables);
+                    connectionToDatabase.Close();
+
+                    number += userTables.Rows.Count;
+
+                    string past = "";
+                    int order_count = 1;
+                    int color_change = 0;
+                    for (int i = 0; i < userTables.Rows.Count; i++)
+                    {
+                        if (userTables.Rows[i]["address"].ToString() + userTables.Rows[i]["names"].ToString() != past)
+                        {
+                            if (past != "")
+                                SetOrderNumber(order_count - 1, "7001", past);
+                            color_change = (color_change + 1) % 2;
+                            past = userTables.Rows[i]["address"].ToString() + userTables.Rows[i]["names"].ToString();
+                            print_message temp = new print_message(userTables.Rows[i]["address"].ToString(), userTables.Rows[i]["names"].ToString(), this, "7001");
+                            temp.Dock = System.Windows.Forms.DockStyle.Top;
+                            temp.Name = userTables.Rows[i]["address"].ToString() + userTables.Rows[i]["names"].ToString();
+                            isolation temp_isolation = new isolation();
+                            temp_isolation.Dock = System.Windows.Forms.DockStyle.Top;
+                            this.plDownList.Controls.Add(temp_isolation);
+                            this.plDownList.Controls.Add(temp);
+                            if (color_change == 1)
+                                temp.color_set(Color.LightYellow);
+                            else
+                                temp.color_set(Color.LightBlue);
+                            order_count = 1;
+                        }
+
+                        if (color_change == 1)
+                        {
+                            userTables.Rows[i]["files"] = "{'files': " + userTables.Rows[i]["files"].ToString() + "}";
+                            JObject JOtemp = (JObject)JsonConvert.DeserializeObject(userTables.Rows[i]["files"].ToString());
+                            JArray JAtemp = (JArray)JOtemp["files"];
+                            foreach (JToken temp_token in JAtemp)
+                            {
+                                item[i] = new ListboxItem(temp_token["fileurl"].ToString(), temp_token["filename"].ToString(), userTables.Rows[i]["address"].ToString(), this, userTables.Rows[i]["paperType"].ToString(), "", "", userTables.Rows[i]["remark"].ToString(), userTables.Rows[i]["ID"].ToString(), userTables.Rows[i]["names"].ToString(), "", "", "", Color.LightYellow, "", "7001");
+                                //item[i].Name = i.ToString();
+                                item[i].Name = userTables.Rows[i]["ID"].ToString() + userTables.Rows[i]["address"].ToString() + userTables.Rows[i]["names"].ToString();
+                                item[i].Dock = System.Windows.Forms.DockStyle.Top;
+                                item[i].Location = new System.Drawing.Point(0, 80 * i);
+                                //item[i].Name = "item" + i;
+                                //item[i].Name = address[i] + Names[i];
+                                item[i].Size = new System.Drawing.Size(System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width, 80);
+                                item[i].MinimumSize = new Size(450, 80);
+                                item[i].TabIndex = i;
+                                this.plDownList.Controls.Add(item[i]);
+                                //is_any_print = 1;
+                                //print_num++;
+                            }
+                            Order temp_order = new Order(this, Color.LightYellow, userTables.Rows[i]["ID"].ToString(), order_count++, userTables.Rows[i]["paperType"].ToString(), userTables.Rows[i]["remark"].ToString(), userTables.Rows[i]["address"].ToString(), userTables.Rows[i]["names"].ToString(), userTables.Rows[i]["files"].ToString(), "7001");
+                            temp_order.Name = userTables.Rows[i]["ID"].ToString();
+                            temp_order.Dock = System.Windows.Forms.DockStyle.Top;
+                            this.plDownList.Controls.Add(temp_order);
+                        }
+                        else
+                        {
+                            userTables.Rows[i]["files"] = "{'files': " + userTables.Rows[i]["files"].ToString() + "}";
+                            JObject JOtemp = (JObject)JsonConvert.DeserializeObject(userTables.Rows[i]["files"].ToString());
+                            JArray JAtemp = (JArray)JOtemp["files"];
+                            foreach (JToken temp_token in JAtemp)
+                            {
+                                item[i] = new ListboxItem(temp_token["fileurl"].ToString(), temp_token["filename"].ToString(), userTables.Rows[i]["address"].ToString(), this, userTables.Rows[i]["paperType"].ToString(), "", "", userTables.Rows[i]["remark"].ToString(), userTables.Rows[i]["ID"].ToString(), userTables.Rows[i]["names"].ToString(), "", "", "", Color.LightBlue, "", "7001");
+                                //item[i].Name = i.ToString();
+                                item[i].Name = userTables.Rows[i]["ID"].ToString() + userTables.Rows[i]["address"].ToString() + userTables.Rows[i]["names"].ToString();
+                                item[i].Dock = System.Windows.Forms.DockStyle.Top;
+                                item[i].Location = new System.Drawing.Point(0, 80 * i);
+                                //item[i].Name = "item" + i;
+                                //item[i].Name = address[i] + Names[i];
+                                item[i].Size = new System.Drawing.Size(System.Windows.Forms.Screen.PrimaryScreen.WorkingArea.Width, 80);
+                                item[i].MinimumSize = new Size(450, 80);
+                                item[i].TabIndex = i;
+                                this.plDownList.Controls.Add(item[i]);
+                                //is_any_print = 1;
+                                //print_num++;
+                            }
+                            Order temp_order = new Order(this, Color.LightBlue, userTables.Rows[i]["ID"].ToString(), order_count++, userTables.Rows[i]["paperType"].ToString(), userTables.Rows[i]["remark"].ToString(), userTables.Rows[i]["address"].ToString(), userTables.Rows[i]["names"].ToString(), userTables.Rows[i]["files"].ToString(), "7001");
+                            temp_order.Name = userTables.Rows[i]["ID"].ToString();
+                            temp_order.Dock = System.Windows.Forms.DockStyle.Top;
+                            this.plDownList.Controls.Add(temp_order);
+                        }
+                    }
+                    if (past != "")
+                        SetOrderNumber(order_count - 1, "7001", past);
+                    string time_str = "以下是" + userTable.Rows[k]["sendTime"].ToString().Substring(0, userTable.Rows[k]["sendTime"].ToString().IndexOf(' ')) + " " + userTable.Rows[k]["timeQuantum"].ToString() + "送货";
+                    time_form times = new time_form(time_str);
+                    times.Dock = System.Windows.Forms.DockStyle.Top;
+                    this.plDownList.Controls.Add(times);
+                }
+            }
+            return number;
         }
 
         private int refreshNormal()
@@ -1333,10 +1640,10 @@ namespace SchoolPrint
             int number = 0;
 
             //string jsonText = PostDataToUrl("uid" + "=" + uid, "http://www.xiaoyintong.com/v3_school_printer/list");
-            string jsonText = PostDataToUrl("", "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/printing/normal/list");
-            //StreamReader r = new StreamReader(@"L:\点维工作室\schoolprint-web\服务器数据.txt", Encoding.Default);
-            //string jsonText = r.ReadToEnd();
-            //r.Close();
+            //string jsonText = PostDataToUrl("", "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/printing/normal/list");
+            StreamReader r = new StreamReader(@"F:\点维工作室\schoolprint-web-version2\schoolprint-web-v2.0\服务器数据.txt", Encoding.Default);
+            string jsonText = r.ReadToEnd();
+            r.Close();
             if (jsonText.IndexOf("true") != -1)
             {
                 int k = 1;
