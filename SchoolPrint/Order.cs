@@ -88,7 +88,8 @@ namespace SchoolPrint
                 if (result == DialogResult.No)
                     return;
             }
-            string jsonText = FatherForm.PostDataToUrl("order_tid=" + OrderId + "&money=" + tryMoney, "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/printing/commit");
+            //string jsonText = FatherForm.PostDataToUrl("order_tid=" + OrderId + "&money=" + tryMoney, "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/printing/commit");
+            string jsonText = FatherForm.PostDataToUrl("order_tid=" + OrderId + "&money=" + tryMoney, "http://api.xiaoyintong.com/api/v1/desktop/order/printing/commit");
             JObject jo = (JObject)JsonConvert.DeserializeObject(jsonText);
             string message = jo["message"].ToString(); ;
             bool status = (bool)jo["success"];
@@ -209,7 +210,8 @@ namespace SchoolPrint
                 return true;
             else if (IsPrinting == "1")
                 return true;
-            string jsonText = FatherForm.PostDataToUrl("order_tid=" + OrderId, "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/waiting/commit");
+            //string jsonText = FatherForm.PostDataToUrl("order_tid=" + OrderId, "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/waiting/commit");
+            string jsonText = FatherForm.PostDataToUrl("order_tid=" + OrderId, "http://api.xiaoyintong.com/api/v1/desktop/order/waiting/commit");
             JObject jo = (JObject)JsonConvert.DeserializeObject(jsonText);
             string message = jo["message"].ToString(); ;
             bool status = (bool)jo["success"];

@@ -1348,7 +1348,8 @@ namespace SchoolPrint
             command.ExecuteNonQuery();
             connectionToDatabase.Close();
 
-            string jsonText = PostDataToUrl("", "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/printing/normal/list");
+            //string jsonText = PostDataToUrl("", "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/printing/normal/list");
+            string jsonText = PostDataToUrl("", "http://api.xiaoyintong.com/api/v1/desktop/order/printing/normal/list");
             //StreamReader r = new StreamReader(@"F:\点维工作室\schoolprint-web-version2\schoolprint-web-v2.0\服务器数据.txt", Encoding.Default);
             //string jsonText = r.ReadToEnd();
             //r.Close();
@@ -1500,7 +1501,8 @@ namespace SchoolPrint
             command.ExecuteNonQuery();
             connectionToDatabase.Close();
 
-            string jsonText = PostDataToUrl("", "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/printing/vip/list");
+            //string jsonText = PostDataToUrl("", "http://api.xiaoyintong.dev:8000/api/v1/desktop/order/printing/vip/list");
+            string jsonText = PostDataToUrl("", "http://api.xiaoyintong.com/api/v1/desktop/order/printing/vip/list");
             //StreamReader r = new StreamReader(@"F:\点维工作室\schoolprint-web-version2\schoolprint-web-v2.0\服务器数据.txt", Encoding.Default);
             //string jsonText = r.ReadToEnd();
             //r.Close();
@@ -2701,7 +2703,8 @@ namespace SchoolPrint
                     string ShoperIds = "email";
                     string Passwords = "password";
                     //string Text = PostDataToUrl(ShoperIds + "=" + textBox1.Text + "&" + Passwords + "=" + GetMD5Hash(textBox2.Text).ToLower(), "http://www.xiaoyintong.com/v3_school_printer/login");
-                    string Text = PostDataToUrl(ShoperIds + "=" + textBox1.Text + "&" + Passwords + "=" + GetMD5Hash(textBox2.Text).ToLower(), "http://api.xiaoyintong.dev:8000/api/v1/desktop/login");
+                    //string Text = PostDataToUrl(ShoperIds + "=" + textBox1.Text + "&" + Passwords + "=" + GetMD5Hash(textBox2.Text).ToLower(), "http://api.xiaoyintong.dev:8000/api/v1/desktop/login");
+                    string Text = PostDataToUrl(ShoperIds + "=" + textBox1.Text + "&" + Passwords + "=" + GetMD5Hash(textBox2.Text).ToLower(), "http://api.xiaoyintong.com/api/v1/desktop/login");
                     //string Text = "{\"status\":true,\"uid\":5,\"info\":密码不正确}";
                     //byte[] buffer = Encoding.Unicode.GetBytes(Text);
                     //Text = Encoding.Unicode.GetString(buffer);
